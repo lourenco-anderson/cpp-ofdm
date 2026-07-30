@@ -1,5 +1,18 @@
-What blocked: remenber the initial setuo of C files; How to do a function without checking online; remeber how pointer works by * and &;
+Log — Day 1
+1. Duração real: 1h — pipeline de compilação + exercício de ponteiros.
 
-I had help of copilot to write the code as soon he understood my objective;
+2. Ferramentas/comandos novos: gcc -E/-S/-c, -Wall, -Wconversion, nm, file, grep -n, echo $?.
 
-I could also redo the function without returning nothing.
+3. Bug + causa raiz: undefined reference to main — causa real: estava editando/compilando o arquivo errado, não um erro de sintaxe C.
+
+4. Hipótese testada e corrigida: nenhuma formal neste dia (mais exploratório/setup).
+
+5. Confiança nos checkpoints: média — resolveu o exercício de ponteiro-como-saída corretamente, mas não fechou sozinho a reflexão sobre return sum até ser questionado.
+
+6. Questões em aberto (resolvida agora): -Wconversion não acusou nada na conversão double→int do return sum porque o valor (36.0) era exato e cabia na faixa 0-255 do código de saída — coincidência de valor, não correção de design. main continua semanticamente errado retornando sum em vez de um código de status; ficou como está, decisão consciente de não corrigir agora.
+
+7. Conexão com o projeto: primeiro contato com "ponteiro como mecanismo de saída de função" — padrão que vai reaparecer o tempo todo ao passar buffers de sinal por referência em C++/DSP.
+
+8. Fonte de ajuda: Copilot para escrever o código depois de entender o objetivo; pesquisa própria para o pipeline de compilação (man/--help do gcc).
+
+Reflexão adicional: usei Copilot para gerar o código nos dois dias depois de entender o que precisava fazer. Vale questionar quanto da lógica eu formulei de fato vs. quanto só validei — isso importa para saber se consigo defender esse código numa entrevista técnica sem assistência.

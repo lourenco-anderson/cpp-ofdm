@@ -1,3 +1,17 @@
-What blocked: remember how to access the address of a pointer but it was just look on the exercises of the previous day and it was clear; How to use a matrix as a inpout of a function and how to get their sizes; remember that generalizing in C is not as easy as in python;
+Log — Day 2
 
-I had help of copilot to write the code as soon he understood my objective, but less than the previous day, I had to do some research on how to pass a matrix to a function and how to get their sizes;
+1. Duração real: ~[preencher] — aritmética de ponteiros + matriz 2D + reflexão sobre cache.
+
+2. Ferramentas/comandos novos: %p no printf, %zu para size_t, (void*) cast em ponteiros para impressão de endereço.
+
+3. Bug + causa raiz: erro de compilação array type has incomplete element type 'double[]' ao tentar remover as duas dimensões da assinatura da função — causa: o compilador precisa do tamanho de todas as dimensões exceto a primeira para calcular o deslocamento entre linhas na aritmética de ponteiro.
+
+4. Hipótese testada e corrigida: achei inicialmente que a matriz double[4][8] era armazenada como "blocos separados"; testei imprimindo endereços de matrix[0][7] e matrix[1][0], e a diferença de exatamente 8 bytes confirmou que é um bloco único contíguo.
+
+5. Confiança nos checkpoints: cresceu ao longo do dia — comecei "achando" (contiguidade, ordem de acesso) e terminei com evidência empírica própria, embora tenha superestimado o ganho de performance ("reduzido pela metade" sem base numérica real).
+
+6. Questões em aberto: nenhuma pendente.
+
+7. Conexão com o projeto: matriz double[4][8] mapeada mentalmente como símbolos OFDM × subportadoras; contiguidade e acesso row-wise conectam diretamente com o ângulo de eficiência/energia da tese (cache locality reduz operações de memória, relevante para custo computacional/energético).
+
+8. Fonte de ajuda: Copilot para o código, menos que no dia anterior; pesquisa própria necessária para descobrir como passar matriz para função e derivar dimensões via sizeof.

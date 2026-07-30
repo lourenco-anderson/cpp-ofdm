@@ -16,5 +16,4 @@ int main(){
     sum_avg(arr, 8, &avg, &sum);
     printf("Sum: %f\n", sum);
     printf("Avg: %f\n", avg);
-    return sum;
 } 
