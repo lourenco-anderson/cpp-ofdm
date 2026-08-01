@@ -1,17 +1,17 @@
 Log — Day 3
 
-1. Duração real: 1h30 — malloc + struct + reflexão sobre double free.
+1. Actual duration: 1h30 — malloc + struct + reflection on double free.
 
-2. Ferramentas/comandos novos: malloc, free, struct, scanf("%zu", ...) para ler size_t, NULL como valor sentinela de ponteiro.
+2. New tools/commands: malloc, free, struct, scanf("%zu", ...) to read size_t, NULL as a sentinel pointer value.
 
-3. Bug + causa raiz: free_signal tentando dar free() em signal.data[i] (um double, não um ponteiro) em vez de free() no ponteiro data inteiro — confusão entre o padrão antigo (array de ponteiros, um malloc por elemento) e o padrão atual (um único malloc pro array inteiro); Sintaxe inválida output.*data (operador ponteiro-pra-membro de C++, não existe em C) — confusão entre C e C++ aprendido há 10 anos atrás; Função create_signal sem return no caminho de sucesso original (por comentar os return de erro sem saber o que colocar no lugar).
+3. Bug + root cause: free_signal trying to free() signal.data[i] (a double, not a pointer) instead of free()-ing the entire data pointer — confusion between the old pattern (array of pointers, one malloc per element) and the current pattern (a single malloc for the whole array); invalid syntax output.*data (C++ pointer-to-member operator, doesn't exist in C) — confusion between C and C++ learned 10 years ago; create_signal function missing a return on the original success path (from commenting out the error returns without knowing what to put there instead).
 
-4. Hipótese testada e corrigida: Achei que break resolveria o problema de "sair mais cedo" da função em caso de erro — na verdade break só sai de loops, não de funções; a ferramenta certa era return, faltava decidir o quê retornar. Faltava decidir como sinalizar erro numa função que retorna struct por valor (sem NULL óbvio como em ponteiros) — resolvido com a estratégia de "struct sentinela" (data = NULL, length = 0).
+4. Hypothesis tested and corrected: I thought break would solve the problem of "exiting early" from the function on error — actually break only exits loops, not functions; the right tool was return, I just hadn't decided what to return. I still had to decide how to signal an error in a function that returns a struct by value (no obvious NULL like with pointers) — solved with the "sentinel struct" strategy (data = NULL, length = 0).
 
-5. Confiança nos checkpoints: baixa no design de tratamento de erro (não tinha nenhuma ideia de como resolver sozinho, precisei das 3 opções apresentadas pra escolher uma) — mas alta na implementação depois de escolher a estratégia, incluindo achar sozinho o bug remanescente de length não-zerado no branch de falha do malloc.
+5. Confidence at checkpoints: low on error-handling design (had no idea how to solve it on my own, needed the 3 options presented to pick one) — but high on the implementation after choosing the strategy, including finding the remaining bug of length not being zeroed on the malloc failure branch on my own.
 
-6. Questões em aberto: nenhuma pendente.
+6. Open questions: none pending.
 
-7. Conexão com o projeto: struct Signal { double *data; size_t length; } é o embrião direto de uma abstração de sinal com tamanho variável — resolve o problema que arrays estáticos (Dia 1/2) não resolviam: um sinal OFDM real tem tamanho que depende de configuração (FFT size, subportadoras), não é fixo em tempo de compilação.
+7. Connection to the project: struct Signal { double *data; size_t length; } is the direct embryo of a variable-size signal abstraction — it solves the problem that static arrays (Day 1/2) didn't: a real OFDM signal has a size that depends on configuration (FFT size, subcarriers), not fixed at compile time.
 
-8. Fonte de ajuda: documentação antiga de C++ (que confundiu a sintaxe, gerando o erro do .*data); Copilot usado minimamente; a maior parte do design de tratamento de erro veio de discussão conceitual antes de codar, não de busca externa.
+8. Source of help: old C++ documentation (which confused the syntax, causing the .*data error); Copilot used minimally; most of the error-handling design came from conceptual discussion before coding, not external search.

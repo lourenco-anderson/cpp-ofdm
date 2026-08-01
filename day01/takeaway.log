@@ -1,18 +1,18 @@
 Log — Day 1
-1. Duração real: 1h — pipeline de compilação + exercício de ponteiros.
+1. Actual duration: 1h — compilation pipeline + pointer exercise.
 
-2. Ferramentas/comandos novos: gcc -E/-S/-c, -Wall, -Wconversion, nm, file, grep -n, echo $?.
+2. New tools/commands: gcc -E/-S/-c, -Wall, -Wconversion, nm, file, grep -n, echo $?.
 
-3. Bug + causa raiz: undefined reference to main — causa real: estava editando/compilando o arquivo errado, não um erro de sintaxe C.
+3. Bug + root cause: undefined reference to main — real cause: I was editing/compiling the wrong file, not a C syntax error.
 
-4. Hipótese testada e corrigida: nenhuma formal neste dia (mais exploratório/setup).
+4. Hypothesis tested and corrected: none formal this day (more exploratory/setup).
 
-5. Confiança nos checkpoints: média — resolveu o exercício de ponteiro-como-saída corretamente, mas não fechou sozinho a reflexão sobre return sum até ser questionado.
+5. Confidence at checkpoints: medium — solved the pointer-as-output exercise correctly, but didn't work through the return sum reflection on my own until prompted.
 
-6. Questões em aberto (resolvida agora): -Wconversion não acusou nada na conversão double→int do return sum porque o valor (36.0) era exato e cabia na faixa 0-255 do código de saída — coincidência de valor, não correção de design. main continua semanticamente errado retornando sum em vez de um código de status; ficou como está, decisão consciente de não corrigir agora.
+6. Open questions (resolved now): -Wconversion didn't flag anything on the double→int conversion of return sum because the value (36.0) was exact and fit within the 0-255 exit code range — a coincidence of value, not a correct design. main is still semantically wrong, returning sum instead of a status code; left as is, a conscious decision not to fix it now.
 
-7. Conexão com o projeto: primeiro contato com "ponteiro como mecanismo de saída de função" — padrão que vai reaparecer o tempo todo ao passar buffers de sinal por referência em C++/DSP.
+7. Connection to the project: first contact with "pointer as a function output mechanism" — a pattern that will keep reappearing when passing signal buffers by reference in C++/DSP.
 
-8. Fonte de ajuda: Copilot para escrever o código depois de entender o objetivo; pesquisa própria para o pipeline de compilação (man/--help do gcc).
+8. Source of help: Copilot to write the code after understanding the goal; own research for the compilation pipeline (gcc man/--help).
 
-Reflexão adicional: usei Copilot para gerar o código nos dois dias depois de entender o que precisava fazer. Vale questionar quanto da lógica eu formulei de fato vs. quanto só validei — isso importa para saber se consigo defender esse código numa entrevista técnica sem assistência.
+Additional reflection: I used Copilot to generate the code on both days after understanding what I needed to do. Worth questioning how much of the logic I actually formulated vs. how much I just validated — this matters for knowing whether I can defend this code in a technical interview without assistance.

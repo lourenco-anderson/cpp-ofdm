@@ -1,0 +1,17 @@
+Log — Day 4
+
+1. Actual duration: 1h — function library + Makefile + bash automatic operators.
+
+2. New tools/commands: separating .h and .c files, how to write a basic Makefile, make automatic variables (such as $@ (target), $< (prerequisite), $^ (all prerequisites)) to simplify the Makefile.
+
+3. Bug + root cause: trying to do include guards, but doing it with #include "signal.h" inside signal.c and main.c, which isn't correct, since that wasn't protecting against multiple definitions — it had to be done in signal.h, not in signal.c or main.c. The root cause was lack of knowledge about include guards; also trying to write an automatic Makefile from the start without properly understanding how it works.
+
+4. Hypothesis tested and corrected: in the Makefile, $@ means the target, $< means the first prerequisite (which I initially thought was about left or right, and didn't know how to translate into context), and $^ means all prerequisites. I thought the .o in the Makefile was optional, but it's actually what lets you compile only the .c files that changed instead of all of them, saving compilation time.
+
+5. Confidence at checkpoints: high on implementing the function library, low on the advanced/automatic Makefile at first, high on the basic Makefile, and medium on the automatic Makefile implementation after understanding the basics. Didn't accept Copilot's automatic solution ($(TARGET): $(OBJS) with $@/$^) without first understanding what it meant — went back to the basics and then returned to the automatic version with (even if partial) understanding of what each variable means.
+
+6. Open questions: none pending.
+
+7. Connection to the project: separating and modularizing files and functions so the project is more organized and easier to maintain, plus enabling code reuse, and using the Makefile to build the project automatically, saving time and avoiding compilation errors.
+
+8. Source of help: old C++ documentation; OAI code to recall the use of #ifndef, even if only partially; old projects to recall Makefile usage (but it was already more advanced than what I needed, so I didn't use anything from there); Copilot used minimally; part of the error-handling design came from conceptual discussion before coding, not external search.

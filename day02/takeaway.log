@@ -1,17 +1,17 @@
 Log — Day 2
 
-1. Duração real: ~[preencher] — aritmética de ponteiros + matriz 2D + reflexão sobre cache.
+1. Actual duration: ~[fill in] — pointer arithmetic + 2D matrix + reflection on cache.
 
-2. Ferramentas/comandos novos: %p no printf, %zu para size_t, (void*) cast em ponteiros para impressão de endereço.
+2. New tools/commands: %p in printf, %zu for size_t, (void*) cast on pointers for address printing.
 
-3. Bug + causa raiz: erro de compilação array type has incomplete element type 'double[]' ao tentar remover as duas dimensões da assinatura da função — causa: o compilador precisa do tamanho de todas as dimensões exceto a primeira para calcular o deslocamento entre linhas na aritmética de ponteiro.
+3. Bug + root cause: compilation error "array type has incomplete element type 'double[]'" when trying to remove both dimensions from the function signature — cause: the compiler needs the size of every dimension except the first to compute the offset between rows in pointer arithmetic.
 
-4. Hipótese testada e corrigida: achei inicialmente que a matriz double[4][8] era armazenada como "blocos separados"; testei imprimindo endereços de matrix[0][7] e matrix[1][0], e a diferença de exatamente 8 bytes confirmou que é um bloco único contíguo.
+4. Hypothesis tested and corrected: I initially thought the double[4][8] matrix was stored as "separate blocks"; I tested by printing the addresses of matrix[0][7] and matrix[1][0], and the difference of exactly 8 bytes confirmed it's a single contiguous block.
 
-5. Confiança nos checkpoints: cresceu ao longo do dia — comecei "achando" (contiguidade, ordem de acesso) e terminei com evidência empírica própria, embora tenha superestimado o ganho de performance ("reduzido pela metade" sem base numérica real).
+5. Confidence at checkpoints: grew throughout the day — I started "guessing" (contiguity, access order) and ended with my own empirical evidence, though I overestimated the performance gain ("cut in half" without a real numeric basis).
 
-6. Questões em aberto: nenhuma pendente.
+6. Open questions: none pending.
 
-7. Conexão com o projeto: matriz double[4][8] mapeada mentalmente como símbolos OFDM × subportadoras; contiguidade e acesso row-wise conectam diretamente com o ângulo de eficiência/energia da tese (cache locality reduz operações de memória, relevante para custo computacional/energético).
+7. Connection to the project: double[4][8] matrix mentally mapped as OFDM symbols × subcarriers; contiguity and row-wise access connect directly to the thesis's efficiency/energy angle (cache locality reduces memory operations, relevant to computational/energy cost).
 
-8. Fonte de ajuda: Copilot para o código, menos que no dia anterior; pesquisa própria necessária para descobrir como passar matriz para função e derivar dimensões via sizeof.
+8. Source of help: Copilot for the code, less than the previous day; own research needed to figure out how to pass a matrix to a function and derive dimensions via sizeof.
