@@ -7,6 +7,6 @@ int main(){
     for(int i = 0; i<6; i++){
         printf("Address of arr[%d]: %p, Value: %f\n", i, (void*)&arr[i], *(ptr + i));
     }
-    printf("%zu\n", sizeof(float));
+
     return 0;
 }

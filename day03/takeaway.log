@@ -1,0 +1,17 @@
+Log — Day 3
+
+1. Duração real: 1h30 — malloc + struct + reflexão sobre double free.
+
+2. Ferramentas/comandos novos: malloc, free, struct, scanf("%zu", ...) para ler size_t, NULL como valor sentinela de ponteiro.
+
+3. Bug + causa raiz: free_signal tentando dar free() em signal.data[i] (um double, não um ponteiro) em vez de free() no ponteiro data inteiro — confusão entre o padrão antigo (array de ponteiros, um malloc por elemento) e o padrão atual (um único malloc pro array inteiro); Sintaxe inválida output.*data (operador ponteiro-pra-membro de C++, não existe em C) — confusão entre C e C++ aprendido há 10 anos atrás; Função create_signal sem return no caminho de sucesso original (por comentar os return de erro sem saber o que colocar no lugar).
+
+4. Hipótese testada e corrigida: Achei que break resolveria o problema de "sair mais cedo" da função em caso de erro — na verdade break só sai de loops, não de funções; a ferramenta certa era return, faltava decidir o quê retornar. Faltava decidir como sinalizar erro numa função que retorna struct por valor (sem NULL óbvio como em ponteiros) — resolvido com a estratégia de "struct sentinela" (data = NULL, length = 0).
+
+5. Confiança nos checkpoints: baixa no design de tratamento de erro (não tinha nenhuma ideia de como resolver sozinho, precisei das 3 opções apresentadas pra escolher uma) — mas alta na implementação depois de escolher a estratégia, incluindo achar sozinho o bug remanescente de length não-zerado no branch de falha do malloc.
+
+6. Questões em aberto: nenhuma pendente.
+
+7. Conexão com o projeto: struct Signal { double *data; size_t length; } é o embrião direto de uma abstração de sinal com tamanho variável — resolve o problema que arrays estáticos (Dia 1/2) não resolviam: um sinal OFDM real tem tamanho que depende de configuração (FFT size, subportadoras), não é fixo em tempo de compilação.
+
+8. Fonte de ajuda: documentação antiga de C++ (que confundiu a sintaxe, gerando o erro do .*data); Copilot usado minimamente; a maior parte do design de tratamento de erro veio de discussão conceitual antes de codar, não de busca externa.
