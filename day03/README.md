@@ -1,55 +1,50 @@
-# Day 1 — Environment Setup & C Fundamentals
+# Day 3 — Dynamic Memory & Structs
 
-**Goal:** Not to write advanced C, but to build the mental model of C (compilation, pointers, memory) before touching C++.
+**Why this matters:** Until now you worked with sizes known at compile time (`double[8]`, `double[4][8]`). A real OFDM signal has a size only known at runtime (depends on configuration — FFT size, allocated subcarriers, etc.). Today: dynamic memory (`malloc`/`free`) and `struct`, which together solve exactly that problem — and this is the C that directly precedes `std::vector` / `new`/`delete` in C++.
 
-## 1. Environment Setup
-- Confirm `gcc`, `make`, and `git` are installed.
-- Initialize the project git repository — this will become the repo published on GitHub after the 6-week sprint.
-- Suggested structure: one folder per day/sprint (`day01/`, `day02/`, ...).
-- Pick an editor (VS Code recommended) without over-configuring — today is for writing code, not tuning environments.
+## Block 1 — Pure `malloc`/`free`
+- Read an integer from the user (`scanf`) representing the size of a `double` array.
+- Allocate that array **dynamically** with a single `malloc` call sized for the whole array (`malloc(n * sizeof(double))`) — not one `malloc` per element.
+- Fill it with values, print them.
+- Free the memory with `free` at the end.
 
-## 2. Understand the Compilation Pipeline (no logic yet)
-Write a trivial "hello world" program. Instead of compiling directly with `gcc file.c -o out`, run the 4 stages manually, each producing an intermediate file:
-1. Preprocessing (`-E`)
-2. Compilation to assembly (`-S`)
-3. Assembly to object file (`-c`)
-4. Final linking
+**Investigate before coding:** What does `malloc` return when it fails, and how would you check that *before* using the pointer? Reason it out from what you already know about pointers (what value already represents "points nowhere"?) before looking it up.
 
-Inspect the intermediate files:
-- `.i` — see how a single `#include` expands into hundreds of lines.
-- `.s` — locate your string literal (e.g. via `grep -n "Hello" file.s`) and the function body markers (`.LFB0`/`.LFE0`). Find the instruction that loads the string's address before calling `printf` (look for `lea` with `%rip`).
-- Compare `file hello.o` vs `file hello` to understand the difference between a relocatable object and a linked executable.
+**Empirical test:** Print the address of `arr[0]` and `arr[1]` (using `&arr[i]`, not the element's value). Confirm the stride is exactly `sizeof(double)` — proving a single `malloc` call yields the same contiguity as a static array, unlike allocating one pointer per element (which has per-allocation overhead and is not guaranteed contiguous).
 
-**Checkpoint:** Be able to explain, in one sentence, what each of the 4 stages does and why it matters (e.g., "what happens when you compile a C program?").
+**Leak test:** Comment out `free` and run the program repeatedly. Research the term "memory leak" and reason about why this matters far more for long-running processes (e.g. a RAN system running 24/7) than for a short script that runs once and exits.
 
-## 3. Core Exercise — Arrays, Pointers, Functions
-Specification (no solution code provided — build it yourself):
-- An array of 8 `double` values representing a fictional "signal sample."
-- A function that receives the array **by pointer** (plus its size) and computes the sum and the average.
-- Since a C function can only `return` one value, find a way to return **two** results (sum and average). Explore pointer-based "output parameters" as one option.
-- Print the results with `printf`.
-
-**Constraints (intentional, to force learning):**
-- The function must receive the array by pointer — do not reimplement the logic inside `main`.
-- Do not use `sizeof` on the array inside the function — only in `main`, where it's still a "real" array.
-
-Compile with warnings enabled:
+## Block 2 — Struct to Package Data + Size
+Define:
 ```
-gcc file.c -o file -Wall
+struct Signal {
+    double *data;
+    size_t length;
+};
 ```
-Pay attention to any warning about incompatible types or unused parameters — the compiler flagging a reasoning error before you even run the program.
+Write:
+- A function that **creates** a `Signal` — allocates memory internally via `malloc` based on a size parameter, and returns the filled struct.
+- A function that **prints** a `Signal`, receiving only the struct (not two separate parameters anymore).
+- A function that **frees** a `Signal`'s memory (a single `free` on the `data` pointer — not per element).
 
-## 4. Understanding Checkpoint (no code)
-Answer for yourself, from memory:
-- What is array-to-pointer decay?
-- Why doesn't C know the size of an array received as a function parameter?
-- What happens in memory (stack) when you declare `double signal[8]` inside `main()`?
+**The real design problem to solve:** If the creation function returns `struct Signal` **by value** (not by pointer), what should it return on an error path (invalid size, or `malloc` failure)? There's no obvious `NULL` for a struct returned by value. Consider at least these strategies before picking one:
+- **Sentinel struct:** return a struct with `data = NULL`, `length = 0` on error; the caller must check this before use.
+- **Output parameter + status code:** change the function to return an `int` status, and pass a `struct Signal *out` to fill — the same output-parameter pattern from Day 1.
+- **Heap-allocated struct pointer:** return `struct Signal *` (allocated with `malloc` too), returning `NULL` on error, like a normal pointer.
 
-## 5. Close the Day
-- Commit with a descriptive message.
-- Write a short log entry: what blocked you, what worked, how long it took.
+Whichever you pick, make sure:
+- The sentinel is internally consistent (if `data == NULL`, `length` must also be `0`, on **every** error path, including inside the `malloc`-failure branch).
+- The caller (`main`) actually checks the result before calling print/free.
+
+## Block 3 — Reflection (no code)
+1. What's the fundamental difference between memory `malloc` allocates and memory from a normal in-function array (`double arr[8]`) — in terms of *where* it lives (stack vs. heap) and *when* it disappears?
+2. Why doesn't a missing `free` crash the program immediately — what exactly leaks, and why does it only become visible after running for a long time or many times?
+3. Why does a real-world variable-size OFDM signal *require* dynamic allocation instead of static arrays?
+4. What happens when a struct containing a pointer is copied by value (e.g. `struct Signal s = create_signal(n);`)? Is the pointed-to data duplicated, or just the pointer (address) copied? What is a "double free," and why is it dangerous (undefined behavior in the memory allocator, not just a predictable leak)?
 
 ## Key Lessons Learned
-- `-Wall` does **not** cover implicit numeric conversion warnings (e.g. `double` → `int` on `return`); that lives under `-Wconversion`. "No warning" does not mean "no problem."
-- A function can return one value via `return`, but can return additional values via pointer "output parameters" — a pattern that reappears constantly in C (and later, when passing signal buffers by reference in C++/DSP).
-- `main`'s return value is a process exit status (0–255 range on Linux), not a place to return arbitrary computed data.
+- A single `malloc` for the whole array preserves contiguity (and thus cache-locality benefits); many small `malloc` calls do not.
+- Always check `malloc`'s return value for `NULL` before use.
+- Returning error status from a function whose success type is a plain struct (not a pointer) has no universally "obvious" solution in C — it's a genuine design decision with real trade-offs.
+- A double free corrupts the allocator's internal bookkeeping — behavior is undefined (crash now, crash later, or silent corruption), which is categorically worse than a predictable memory leak.
+- `free()` must be called on the allocated pointer itself, not on individual elements it points to.
