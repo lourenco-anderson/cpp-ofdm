@@ -1,0 +1,27 @@
+# Log — Day 6
+
+1. **Actual duration:** 1h30m — row-major indexing + struct for matrix + tests of matrix operations.
+
+2. **New tools/commands:** `malloc()` for matrix data allocation; `struct` for matrix representation; row-major indexing formula (`i * cols + j`) for 2D array access in 1D memory; implementation of my own matrix operations (`get_element`/`set_element`).
+
+3. **Bug + root cause:**
+   - Misunderstanding of `double *data[]` vs. `double *data`/`double data[]` as a function parameter — the former decays to `double **` (array of pointers), not `double *` (pointer to a contiguous block); confirmed empirically via compiler warnings ("incompatible pointer type", format mismatch on `%f`). Fixed by using `double *data` or `double data[]` (equivalent).
+   - Used `assert(data != NULL)` to check for `malloc` failure in `create_matrix` — same conceptual mistake flagged in Day 5 (assert is meant for programming invariants, not legitimate runtime error conditions like allocation failure, and is stripped out of production builds via `NDEBUG`). Fixed by reapplying the Day 3 sentinel-struct strategy (`data = NULL`, `rows = 0`, `cols = 0`) with a corresponding check in `main` before using the matrix.
+   - Forgot `free(data)` in Block 1's `main` (the pre-struct version) — noticed and fixed this one myself, without Claude or the compiler flagging it.
+   - Forgot `free_matrix(matrix)` at the end of `test_get_element` in `test_matrix.c` — a small leak in test code, corrected after it was pointed out.
+
+4. **Hypothesis tested and corrected:**
+   - Assumed `size_t rows, cols;` inside the struct might not be valid or might not be best practice — confirmed it's syntactically valid, but separated into two lines as a style preference for clarity/commenting per field.
+   - Manually verified the `i * cols + j` row-major formula on paper before coding, then confirmed it against a small example matrix.
+   - Assumed `assert()` was an acceptable way to check `malloc` failure — tested, and had to correct this by reapplying the Day 5 lesson about assert vs. runtime error handling.
+
+5. **Confidence at checkpoints:** High on the row-major indexing formula and the struct representation — fewer open questions than expected at this stage. Lower, initially, on error-handling design (repeated the `assert`-for-runtime-error mistake from Day 5 before self-correcting with guidance). Test cases for matrix operations passed successfully once written correctly, confirming the implementation.
+
+6. **Open questions:** none pending.
+
+7. **Connection to the project:** Built a dynamic matrix representation (`struct Matrix`) with encapsulated indexing — directly analogous to how `symbols × subcarriers` will be represented in the OFDM project, where matrix size depends on runtime configuration rather than being fixed at compile time. Important stepping stone before moving to Eigen in Phase 2, including awareness of the row-major (C/NumPy) vs. column-major (Eigen) convention mismatch.
+
+8. **Source of help:** Mostly self-directed reasoning through compiler errors and warnings; no significant external search needed today.
+
+## Additional reflection
+Reapplying a lesson from a previous day (Day 5: `assert` vs. runtime error handling) under a new context (matrix allocation instead of signal allocation) was harder than expected — the same mistake resurfaced before being caught. Worth treating this as a signal to explicitly re-check past lessons when starting a new struct/error-handling design, rather than assuming they've been fully internalized after one correction.
