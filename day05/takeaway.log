@@ -1,0 +1,17 @@
+Log — Day 5
+
+1. Actual duration: 1h — assert-based tests + Makefile with multiple targets.
+
+2. New tools/commands: assert() from <assert.h>; ternary operator (tried, then reverted to if/else for clarity); multi-target Makefiles reusing a single pattern rule across two executables; .PHONY targets.
+
+3. Bug + root cause: Tried comparing signal.data == 1.0 directly — compiler error, because signal.data is a double*, not a double; fixed by dereferencing (*signal.data / signal.data[i]). Separately, testLen0 initially copied the same assertions as testLen5 without adjusting them for the error path — asserted signal.data != NULL when it should have asserted signal.data == NULL, causing a failed assertion that was actually a bug in the test, not in create_signal.
+
+4. Hypothesis tested and corrected: Assumed a ternary operator (cond ? assert(a) : assert(b)) was an acceptable way to conditionally assert — technically compiles, but reverted to explicit if/else after recognizing the ternary is meant to produce a value, not select a side effect. Deliberately broke one assertion (-1 → -10) to confirm the test suite would actually catch a real failure, not just pass by coincidence.
+
+5. Confidence at checkpoints: High on writing individual asserts once the pointer/dereference issue was resolved; initially low on distinguishing "testing the error path" from "testing the success path" (copy-pasted assertions without adapting them); high on the multi-target Makefile, correctly predicting the exact number of compile/link commands before running make.
+
+6. Open questions: none pending.
+
+7. Connection to the project: First real automated-test pattern for the codebase — directly answers the Day 4 question of how to validate a component (e.g., future OFDM modulation function) in isolation, without running the full simulation program each time. assert-based invariant checks are the seed of a validation harness for more complex DSP functions later.
+
+8. Source of help: Mostly self-directed reasoning through compiler errors; no significant external search needed today.

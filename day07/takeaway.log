@@ -1,0 +1,26 @@
+# Log — Day 7
+
+1. **Actual duration:** 1h30m — valgrind + signal and matrix integration + tests.
+
+2. **New tools/commands:** valgrind for memory leak check, using pointes only to see the content of other pointer withour actually changing them, ownership of data and variables.
+
+3. **Bug + root cause:**
+   -Misunderstood how far a pointer's "access" extends — a pointer into contiguous memory has no built-in size, and can read/write past its intended logical boundary (e.g. past one matrix row into the next) without any error; the boundary exists only by design (length), never automatically.
+   - Forgot to free a matrix allocated inside a new test function (test_get_row) — same category of mistake as Day 6's test_get_element, confirming a recurring pattern: memory management gets deprioritized while focus is on implementing the function's logic.
+   - free_signal was accidentally left fully commented out in matrix.c after documenting that get_row's result should not be freed — this would have broken the separate, legitimate use case of create_signal/free_signal for signals that do own their memory; restored after review.  
+
+4. **Hypothesis tested and corrected:**
+   -Same as item 3 — confirmed with valgrind that the leak in test_get_row was real (128 bytes, exact call stack create_matrix → test_get_row → main) before fixing it, then confirmed clean afterward.
+   - Tested get_row with an out-of-bounds row index (i == matrix.rows) and confirmed the sentinel path returns data == NULL, length == 0 as designed, without needing to inspect it manually — the test caught it.
+
+5. **Confidence at checkpoints:** High on the mechanics of get_row (pointer arithmetic into an existing block) once the "pointer carries no size" misunderstanding was cleared up. Medium on ownership design — correctly identified the need to document non-owning views, but needed the free_signal mishap to reinforce that owning and non-owning Signal usage must coexist deliberately, not be resolved by removing one path.
+
+
+6. **Open questions:** none pending.
+
+7. **Connection to the project:** get_row is the first real bridge between Signal and Matrix — treating a matrix row as an OFDM symbol without copying data mirrors how a real OFDM signal processing pipeline would slice a subcarrier×symbol matrix into individual symbols for modulation/demodulation. This also surfaces a design question directly relevant to the C++ migration: distinguishing data that owns its memory from data that only views someone else's — a distinction RAII will not resolve automatically in Phase 2, only make the mechanics safer once the ownership decision is made.
+
+8. **Source of help:** Mostly self-directed reasoning through compiler errors and warnings; no significant external search needed today.
+
+## Additional reflection
+This closes Phase 1 (C fundamentals). Two mistakes recurred across multiple days rather than being fixed once and for all: using assert() for legitimate runtime errors instead of programming invariants (Day 5, Day 6), and forgetting to free memory allocated inside test functions (Day 6, Day 7). Both suggest that memory/error-handling discipline needs to be checked deliberately as a habit at the start of any new function, not assumed to be "already learned" after one correction. Going into Phase 2 (C++), this is worth watching for in a new form — RAII will change the mechanics of cleanup, but not the underlying need to reason clearly about ownership and error conditions.

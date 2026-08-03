@@ -8,7 +8,7 @@ void testLen5 (void){
     size_t length = 5;
 
     struct Signal signal = create_signal(length);
-    assert(signal.data != NULL);
+    #inc
     assert(signal.length == length);
     for (size_t i = 0; i < length; i++){
         if (i % 2 == 0) {
