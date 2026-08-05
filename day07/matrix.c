@@ -78,6 +78,6 @@ void free_matrix(struct Matrix matrix){
     free(matrix.data);
 }
 
-// void free_signal(struct Signal signal){
-//     free(signal.data);
-// }
+void free_signal(struct Signal signal){
+    free(signal.data);
+}

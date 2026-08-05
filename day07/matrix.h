@@ -29,6 +29,6 @@ void print_signal(struct Signal signal);
 
 void free_matrix(struct Matrix matrix);
 
-// void free_signal(struct Signal signal);
+void free_signal(struct Signal signal);
 
 #endif
