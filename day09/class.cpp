@@ -21,19 +21,13 @@ Signal::Signal(size_t length){
         this->data = NULL; 
     }else{
         data = new double[length];
-
-        if (this->data == NULL){
-            std::cout << "Memory allocation failed. Exiting.\n"<<std::endl;
-            this->length = 0;
-        }else{
-            for (size_t i = 0; i < length; i++){
-                if (i%2 == 0){
-                    this->data[i] = 1;
-                }else{
-                    this->data[i] = -1;
-                }
+        for (size_t i = 0; i < length; i++){
+            if (i%2 == 0){
+                this->data[i] = 1;
+            }else{
+                this->data[i] = -1;
             }
-        }        
+        }
     }   
 }
 
@@ -49,8 +43,6 @@ Signal::Signal(const Signal &s){
         this->length = 0;
         this->data = NULL;
     }
-    
-
 }
 
 Signal::~Signal(){
@@ -71,14 +63,18 @@ bool Signal::is_valid() const {
 Signal& Signal::operator=(const Signal &other){
     if (this != &other){
         delete[] this->data;
-        this->data = new double[other.length];
-        for (size_t i = 0; i < other.length; i++){
-            this->data[i] = other.data[i];
-        }
 
-        this->length = other.length;
-
-    }
+        if (other.is_valid()){
+            this->data = new double[other.length];
+            for (size_t i = 0; i < other.length; i++){
+                this->data[i] = other.data[i];
+            }
+            this->length = other.length;
+        }else{
+            this->data = NULL;
+            this->length = 0;
+        }       
+    }      
     return *this;
 }
 
@@ -97,6 +93,11 @@ int main() {
     Signal s3(3); // copy constructor
     s3 = s1;
     s.print();
+
+    Signal invalido(0);      // length 0 -> inválido, data = nullptr
+    Signal s4(5);             // válido, com memória própria alocada
+    s4 = invalido;             // atribuição de um Signal inválido
+    std::cout << "s4 valido? " << s4.is_valid() << std::endl;
 
     return 0;
 }

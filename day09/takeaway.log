@@ -1,0 +1,71 @@
+# Dia 9 — Rule of Three (construtor de cópia + operator=)
+
+## 1. Duração
+~2h (sessão única, sem pausas registradas)
+
+## 2. Ferramentas novas
+- `valgrind --leak-check=full` aplicado especificamente para diagnosticar
+  double free vs. memory leak (dois tipos de erro distintos, não o mesmo problema)
+- Warning do compilador (`-Wdeprecated-copy`) usado como sinal de diagnóstico:
+  o g++ detecta e avisa quando um construtor de cópia customizado existe
+  sem um `operator=` correspondente
+
+## 3. Bug + causa raiz
+**Bug 1 — double free (Bloco 1):** `Signal s2 = s1;` sem construtor de cópia
+customizado aciona o construtor padrão do compilador, que faz cópia rasa
+(memberwise) do ponteiro `data`. `s1` e `s2` passam a apontar para o mesmo
+endereço; os dois destrutores tentam liberar o mesmo bloco → invalid free
+confirmado via valgrind (`is 0 bytes inside a block ... free'd`).
+
+**Bug 2 — double free + memory leak (Bloco 3):** `s3 = s1;` (s3 já
+construído) sem `operator=` customizado aciona o padrão do compilador —
+mesma cópia rasa do ponteiro, MAS com um problema adicional: a memória
+original de `s3` (já alocada antes da atribuição) nunca é liberada,
+gerando leak confirmado (`40 bytes ... definitely lost`) simultâneo ao
+double free.
+
+**Causa raiz comum aos dois:** o compilador gera versões padrão de
+construtor de cópia e `operator=` que fazem cópia membro a membro — correta
+para tipos simples, mas semanticamente errada quando um membro é ponteiro
+bruto representando posse de recurso.
+
+## 4. Hipótese testada / corrigida
+- Hipótese inicial errada: confundi a causa da Rule of Three com o
+  conceito de `union` (múltiplos tipos compartilhando o mesmo espaço de
+  memória) — conceito não relacionado.
+- Corrigido para: a motivação real é custo de cópia de buffers grandes
+  (O(n) elemento a elemento) vs. transferência de posse do ponteiro
+  (O(1), "roubar" o ponteiro e zerar o original) — é isso que motiva
+  Rule of Five / move semantics, próximo passo da Fase 2.
+- Também corrigi, sem crash mas por auditoria de código: `operator=`
+  inicialmente não tratava `other` inválido (sem checar `other.is_valid()`),
+  ao contrário do construtor de cópia que já tinha essa ramificação desde
+  o início. Corrigido para espelhar a mesma estrutura if/else.
+
+## 5. Confiança nos checkpoints
+- Escrever a assinatura correta do construtor de cópia (`const Signal&`): alta
+- Identificar por que `operator=` precisa de guarda de autoatribuição: média
+  (entendi a mecânica só depois de trabalhar o cenário `s1 = s1` passo a passo)
+- Reconhecer que `operator=` também precisa checar validade de `other`: baixa
+  inicialmente — só percebi depois de ser apontado, não identifiquei sozinho
+  por auditoria própria do código
+
+## 6. Questões em aberto
+- `if (this->data == NULL)` no construtor normal era código morto (o `new`
+  do C++ lança `std::bad_alloc` em falha, não retorna `nullptr` como
+  `malloc`) — removido, mas tratamento de exceção (`try`/`catch`) para
+  falha de alocação real ainda não foi abordado
+- Ainda não testei o comportamento de `Matrix` com o mesmo padrão de bugs —
+  fica como validação pendente quando ela for convertida para classe C++
+
+## 7. Conexão com o projeto
+Buffers de amostras I/Q, símbolos OFDM e matrizes de canal vão ser
+copiados/atribuídos com frequência no pipeline de processamento. A Rule of
+Three garante correção (sem double free/leak); a Rule of Five (próximo
+passo) vai endereçar performance para esses buffers potencialmente grandes,
+evitando cópia elemento a elemento quando só transferência de posse resolve.
+
+## 8. Fonte de ajuda
+Mentoria socrática (Claude) — especificação e perguntas diagnósticas,
+implementação e depuração feitas de forma independente. Sem uso de Copilot
+registrado neste dia.
