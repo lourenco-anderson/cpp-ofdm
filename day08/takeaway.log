@@ -1,0 +1,24 @@
+# Log — Day 8
+
+1. **Actual duration:** ~1h30m — first C++ class (Signal), constructor/destructor, encapsulation, RAII in practice.
+
+2. **New tools/commands:** `g++` (vs. `gcc`); `class` syntax with `private`/`public` sections; `std::cout`/`std::cin` from `<iostream>`; constructors and destructors (`Signal(size_t)` / `~Signal()`); the `Class::method` scope-resolution syntax for out-of-class method definitions; `const` member methods (`void print() const`); `new[]`/`delete[]` as the C++ equivalent of `malloc`/`free`; the `this` pointer to disambiguate a member from a same-named parameter.
+
+3. **Bug + root cause:**
+   - Tried to access `s.data` directly from `main()` — compile error, because `data` is `private`. Root cause: expected the same unrestricted struct-field access as C, not yet accounting for C++ encapsulation. Fixed by adding a public `is_valid() const` accessor instead of exposing the field.
+   - Used `if (s.is_valid() == 0)` instead of `if (!s.is_valid())` — works because `bool` converts implicitly to `int`, but is a C-style leftover now that a real `bool` type is available.
+
+4. **Hypothesis tested and corrected:**
+   - Assumed a constructor might need a `return` statement like a regular function — corrected: constructors (and destructors) never have a return type, not even `void`, because they initialize/destroy the object itself rather than computing and handing back a value.
+   - Tested whether `delete[]` on a `NULL` pointer would crash (relevant for the sentinel/error path, where `data` may never have been allocated) — confirmed it's safe and well-defined in C++, mirroring `free(NULL)` being safe in C. The destructor runs unconditionally on scope exit regardless of whether construction succeeded, and no extra `if (data != NULL)` guard was needed.
+
+5. **Confidence at checkpoints:** High on constructor/destructor mechanics and encapsulation once the `private` access error was resolved. Confirmed RAII directly and concretely: the destructor's log message ("Signal destroied") printed automatically at the end of `main` without any explicit cleanup call, in both the success path (`num = 10`) and the error path (`num = 0`).
+
+6. **Open questions:** none pending.
+
+7. **Connection to the project:** First C++ representation of a signal, replacing the C struct + create/free function pair with automatic lifecycle management. Encapsulation (`private` data, `is_valid()` accessor) and `const`-correctness are direct groundwork for the eventual `Matrix` class and later DSP function interfaces, where controlling exactly what external code can touch matters more as the codebase grows.
+
+8. **Source of help:** Mostly guided explanation of new C++-specific syntax and concepts (constructors, destructors, `private`/`public`, `this`) rather than external search — concepts were new enough to need direct explanation rather than independent lookup.
+
+## Additional reflection
+This was the first day where RAII was observed working end-to-end, including through an error path — a direct payoff of the Phase 1 retrospective, where forgetting `free()` was flagged as a recurring weakness. However, reflection surfaced (and Day 9 confirmed in practice) that RAII only automates *when* cleanup happens, not *whether copying an object is safe* — the compiler-generated copy constructor still performs a shallow copy of the pointer, reintroducing a double-free risk conceptually identical to the Day 3 discussion, just triggered by object copying instead of manual struct copying.

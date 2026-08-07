@@ -56,7 +56,7 @@ int main() {
     std::cin >> num;
 
     Signal s(num);
-    if (s.is_valid() == 0){
+    if (s.is_valid()){
         std::cout << "...\n" <<std::endl;
         return 1;
     }
