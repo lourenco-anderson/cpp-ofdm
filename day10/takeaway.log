@@ -1,0 +1,29 @@
+# Day 10 — Log
+
+1. **Duration**: 2h (single session, no recorded breaks)
+
+2. **New tools**: `std::move`, `-Wself-move` (GCC warning), `noexcept` in the context of move semantics
+
+3. **Bug + root cause**: two distinct bugs
+   - **Bug 1**: `this(other);` inside `operator=(Signal&&)` — invalid syntax. `this` is a pointer, not a callable; attempting to "reconstruct" an already-existing object this way is not valid C++ (compiler error: *"expression cannot be used as a function"*).
+   - **Bug 2**: `other.data` / `other.length` were not reset after stealing the pointer in the valid branch of move assignment. This left two objects owning the same heap block simultaneously — a double-free risk once both destructors ran.
+
+4. **Hypothesis tested/corrected**:
+   - Initial hypothesis: a naive `Signal s = func();` return-by-value always costs 2 allocations without move semantics. Not directly verified — compiler copy elision (RVO) may already eliminate the copy in that specific case; the real, guaranteed gain from move ctor/assignment shows up in reassignment (`s = other;`) and container-reallocation scenarios, not necessarily in direct initialization from a temporary.
+   - Hypothesis about `std::move`: confirmed — it only casts an lvalue to an rvalue reference (an overload-resolution signal); it performs no data transfer itself. The actual resource transfer happens entirely inside the move constructor / move assignment operator.
+
+5. **Confidence at checkpoints**:
+   1. Predicting the cost of return-by-value without move semantics — **high**
+   2. Understanding what `Signal&&` actually references (lvalue vs. rvalue) — **medium**
+   3. `noexcept` and the vector's move-vs-copy decision during reallocation — **medium**
+   4. Finding the root cause of the `this(other)` compile error — **low**
+   5. Correcting the move assignment's semantics (steal vs. copy) — **medium**
+   6. Understanding `std::move` (label vs. actual transfer) — **high**
+   7. Designing a valid self-move-assignment test (first attempt tested an empty object, second attempt with real data actually proved something) — **medium**
+   8. Interpreting the clean valgrind output as confirmation — **medium**
+
+6. **Open questions**: _[fill in]_
+
+7. **Connection to the project**: `Signal` objects will be passed through multiple stages of the OFDM pipeline (modulation, FFT, filtering). Avoiding unnecessary deep copies of sample buffers via move semantics reduces memory traffic — directly relevant to the thesis's energy/complexity angle (fewer copies → less memory traffic → lower energy consumption).
+
+8. **Help source**: Socratic mentoring (this conversation) + compiler warnings (`-Wall -Wextra`, `-Wself-move`) + valgrind for empirical verification
