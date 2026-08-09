@@ -1,0 +1,26 @@
+# Day 11 — Log
+
+1. **Duration**: 1h
+
+2. **New tools**: Eigen (header-only, `libeigen3-dev`), `Eigen::MatrixXd` / `Eigen::VectorXd`, `Eigen::Map`, `colPivHouseholderQr().solve()`
+
+3. **Bug / misconception + root cause**: not a code bug this time, but a conceptual misconception caught before it could become a silent one — initially believed MATLAB uses row-major storage, same as C. Corrected: MATLAB is column-major, inherited from the Fortran/BLAS/LAPACK lineage — which is also why Eigen defaults to column-major (compatibility with that same ecosystem).
+
+4. **Hypothesis tested/corrected**:
+   - Predicted the raw memory layout of a small `Eigen::MatrixXd` before dumping it via `.data()` — correctly predicted column-major order (`1 4 2 5 3 6` for logical matrix `[[1,2,3],[4,5,6]]`).
+   - Predicted the output of `Eigen::Map` over a raw row-major C buffer both without and with an explicit `RowMajor` template parameter — both predictions matched the actual output.
+   - Hand-solved a 2×2 linear system (`Ax = b`) before running `colPivHouseholderQr().solve()` — result matched exactly (`x=1, y=3`).
+
+5. **Confidence at checkpoints**: 
+   1. Understanding the difference between row-major and column major — **high**
+   2. Understanding the convention used in Eigen — **high**
+   3. Understanding how to do the mapping in column-major and row-major — **high**
+   4. Input parameters of Eigen::Map and Eigen::Matrix — **medium**
+   5. Linear System solving using Eigen — **high**
+   6. Understanding that the notation A*x=b is the basis of Eigen — **high**
+
+6. **Open questions**: none
+
+7. **Connection to the project**: `Eigen::Map` will be used to wrap the project's own row-major `Matrix`/`Signal` buffers (and FFTW output) without copying — getting the `RowMajor` flag right avoids a silent, hard-to-detect layout bug. The `Ax = b` solve pattern used here is the same canonical form behind MMSE channel estimation in the PHY layer, directly relevant to where Eigen will be used later in the OFDM pipeline. The column-major/row-major distinction is also directly relevant to the thesis's MATLAB-referenced validation work.
+
+8. **Help source**: Socratic mentoring (this conversation) + manual hand calculations to verify predictions before running code + raw memory inspection via `.data()`
