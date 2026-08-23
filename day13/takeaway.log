@@ -1,0 +1,27 @@
+# Log — Day 13
+
+1. **Actual duration:** ~2h — closing the Signal design decision (aligned allocation via FFTW), fixing a real move-assignment bug, and introducing CMake from scratch.
+
+2. **New tools/commands:** `fftw_malloc`/`fftw_free`; `static_cast<T*>(void*)` (required explicitly in C++, unlike C's implicit conversion); `cmake`, `CMakeLists.txt` syntax (`cmake_minimum_required`, `project`, `set(CMAKE_CXX_STANDARD ...)`, `find_library`, `add_executable`, `target_link_libraries`); out-of-source build workflow (`mkdir build && cd build && cmake .. && make`).
+
+3. **Bug + root cause:**
+   - `fftw_malloc(...)` assigned directly to a `std::complex<double>*` without a cast — compile error, because unlike C, C++ does not implicitly convert `void*` to a typed pointer. Fixed with explicit `static_cast`.
+   - Move assignment operator (`operator=(Signal&& other)`) allocated *new* memory via `fftw_malloc` instead of stealing `other`'s existing pointer, unlike the move constructor (which correctly just reassigned the pointer). This silently defeated the point of "moving" (turning an O(1) operation into an O(n) allocation) and would have left destination memory uninitialized if the copy loop were also missing. Root cause: likely pattern-copied from the adjacent copy-assignment operator written just before it in the file, without re-checking that move semantics require a different approach. Fixed by removing the allocation and copying the move constructor's steal-and-null-out logic.
+   - `find_library(FFTW3 REQUIRED)` — invalid argument usage; confused `find_library`'s signature (`find_library(<output_variable> <library_name>)`) with `find_package`'s `REQUIRED` keyword. Fixed by using `find_library(FFTW3_LIB fftw3)` and referencing `${FFTW3_LIB}` consistently in `target_link_libraries` (the `${FFTW3_LIBRARIES}`/`${FFTW3_INCLUDE_DIRS}` variable names I originally used are a `find_package` naming convention, never actually defined by `find_library`).
+   - `undefined reference to main` when first compiling with `g++` — same class of error as Day 1 (compiling the wrong/stale file); resolved by confirming the correct file and its `main()` were actually being compiled.
+
+4. **Hypothesis tested and corrected:**
+   - Initially believed the `static_assert` comparing `sizeof(std::complex<double>)` and `sizeof(fftw_complex)` was no longer necessary after switching to `fftw_malloc` — corrected: it's not about allocation at all, it's the formal guarantee needed to safely `reinterpret_cast` between the two types later, when implementing an actual FFT method. Removing it would silently remove protection needed one step ahead, not now.
+   - Initially attributed the `build/` directory convention to "the executable being built for the specific machine it will run on" — corrected: it's about separating versioned source from disposable, machine-specific *build-time* artifacts (compiler paths, cache files), not about the runtime target machine.
+   - Verified with `valgrind` that the corrected move-assignment operator, plus every other Rule of Five operation (copy, copy-assignment including invalid signals, move, move-assignment, self-move-assignment), produced zero leaks and zero errors after migrating to `fftw_malloc`/`fftw_free`.
+
+5. **Confidence at checkpoints:** High on migrating the allocator calls (straightforward mechanical change once the `static_cast` requirement was clear). Medium-low on the move-assignment bug — didn't catch it independently; needed it pointed out by comparing the move constructor and move-assignment operator side by side. High on CMake once the `find_library` vs. `find_package` distinction was clarified — configuration and build succeeded on the corrected attempt.
+
+6. **Open questions:** none pending.
+
+7. **Connection to the project:** `Signal` now uses `std::complex<double>` with alignment-appropriate allocation (`fftw_malloc`) and a verified layout guarantee (`static_assert`) — the class is structurally ready to implement a real `Signal::fft()` method using FFTW directly, which is the natural next step. CMake also establishes the build infrastructure needed going forward, since the project will keep depending on external libraries (FFTW today, likely more later) that a plain Makefile can't discover portably.
+
+8. **Source of help:** Mostly self-directed reasoning through compiler/linker errors, guided review of the move-assignment bug (found by side-by-side comparison rather than independently), and targeted research into `find_library` syntax after an initial mix-up with `find_package` conventions.
+
+## Additional reflection
+The move-assignment bug is a useful pattern to flag: writing near-duplicate code blocks (copy-assignment immediately followed by move-assignment) makes it easy to carry over logic that doesn't actually apply to the new context. Worth deliberately re-deriving each Rule-of-Five member from its own first principles (what should *this specific operation* do?) rather than adapting the previous block by pattern-matching, especially for move semantics, where the "steal, don't allocate" requirement is easy to miss if not checked explicitly against the constructor doing the same job.
