@@ -5,7 +5,6 @@
 #include <complex>
 #include <cassert>
 
-
 class Signal {
     private: 
         std::complex<double> *data;
@@ -25,6 +24,17 @@ class Signal {
         Signal fft() const; // perform FFT on the signal
         Signal ifft() const; // perform iFFT on the signal
         
+};
+
+class Matrix {
+    private:
+        std::complex<double> *data;
+        size_t rows;
+        size_t cols;
+    public:
+        Matrix(); // Empty constructor
+        Matrix(size_t rows, size_t cols); // constructor: allocate memory
+        ~Matrix(); // destructor: free memory
 };
 Signal::Signal(){
     this->length = 0;
