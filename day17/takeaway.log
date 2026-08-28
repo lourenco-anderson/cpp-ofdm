@@ -1,0 +1,26 @@
+# Log — Day 16
+
+1. **Actual duration:** ~2h30m — porting `Matrix` from a C struct to a full C++ class with Rule of Five, plus resolving `get_row()` as a safe class method.
+
+2. **New tools/commands:** applying the full `Signal` migration pattern (Days 8–10, 13) to a second class; encountering and understanding "deleted function" errors from incomplete Rule of Five declarations; the "most vexing parse" (`ClassName obj();` parsed as a function declaration, not object construction); constructor overloading (`Signal(size_t, bool)`) to control initialization behavior.
+
+3. **Bug + root cause:**
+   - Sentinel inconsistency in `Matrix`'s constructor: the `rows == 0 || cols == 0` branch set `data = NULL` but left `rows`/`cols` at their original (non-zero) values, unlike the `malloc`-failure branch just below it, which correctly zeroed both. Root cause: rewrote the error-handling logic from scratch during migration instead of porting the already-corrected Day 6 C version directly, reopening a previously-fixed bug.
+   - "Use of deleted function" compiler error on `Matrix m2 = m1;` — declared move constructor/move assignment operator without an explicit copy constructor, causing the compiler to delete the implicit copy constructor (a real C++11+ rule). Root cause: order of writing members mattered by coincidence in `Signal` (copy constructor written first, avoiding this) but not consciously understood as a rule until it surfaced here. Fixed by adding the missing `Matrix(const Matrix &other)` declaration and implementation.
+   - `Signal row();` inside `get_row()` — intended to default-construct a `Signal`, but parsed by the compiler as a function declaration ("most vexing parse"). Fixed by dropping the parentheses (`Signal row;`).
+   - Attempted to access `row.data`/`row.length` directly from `Matrix::get_row()` — compile error, since private-field access between classes (not between instances of the same class) is not permitted. Fixed by adding a public `Signal::set(i, value)` and using it instead.
+
+4. **Hypothesis tested and corrected:**
+   - Initially attempted a "zero-copy" `get_row()`, directly assigning `row.data = this->data + i * cols` (a raw pointer into the matrix's own memory) — recognized before implementing that this reintroduces the exact double-free risk from Day 7's C version, except now guaranteed by RAII's automatic destructor rather than dependent on a human forgetting to call `free_signal`. Corrected by choosing a deep-copy approach instead, an explicit trade of performance for safety at this project stage.
+   - Verified with `valgrind` that the deep-copy `get_row()` produces zero leaks even with `Signal` and `Matrix` interacting for the first time (one class constructing and returning an instance of the other).
+
+5. **Confidence at checkpoints:** High on the basic struct-to-class migration and Rule of Five (direct application of the `Signal` pattern). Lower, initially, on the `get_row()` ownership problem — required explicit reasoning through why the C-era pattern doesn't transfer safely to RAII before arriving at the deep-copy solution. The "most vexing parse" and "deleted function" errors were both genuinely new discoveries, not previously encountered.
+
+6. **Open questions:** none pending — deep-copy vs. view-class trade-off explicitly deferred as a future reconsideration point, not left ambiguous.
+
+7. **Connection to the project:** `Matrix` is now structurally equivalent to `Signal` in terms of safety guarantees (RAII, Rule of Five, aligned allocation), and `get_row()` provides a safe way to extract an individual OFDM symbol as a `Signal` for FFT/IFFT processing — a direct prerequisite for the modulator/demodulator prototype, which needs `Matrix` to represent subcarriers × symbols.
+
+8. **Source of help:** Mostly self-directed for the mechanical migration (Rule of Five, following the established `Signal` pattern); guided review for the `get_row()` ownership problem, the "deleted function" rule, and the "most vexing parse" pitfall — all three were unfamiliar C++-specific behaviors rather than logic errors reachable through compiler messages alone.
+
+## Additional reflection
+Two of today's bugs (sentinel inconsistency, deleted copy constructor) are recurrences or close analogues of mistakes already made once before (Day 6's sentinel bug; the general Rule of Five completeness issue). This reinforces a pattern worth tracking explicitly across the whole project: migrating or extending existing code by rewriting from memory carries real risk of reopening already-solved problems — porting a previously-corrected implementation directly, then adapting it, may be safer than reconstructing the logic from scratch even when the underlying pattern is well understood.
