@@ -1,0 +1,24 @@
+# Log — Day 15
+
+1. **Actual duration:** ~1h — implementing `Signal::ifft()`, resolving the normalization decision, adding an element getter, and validating the full round-trip.
+
+2. **New tools/commands:** `FFTW_BACKWARD` plan direction; per-element normalization after `fftw_execute`; floating-point comparison with tolerance (`std::abs(a - b) < 1e-9`) instead of exact equality; a named getter (`get(i)`) to expose read-only element access.
+
+3. **Bug + root cause:**
+   - Used an undeclared variable `N` inside `ifft()`'s normalization loop — `N` was a `main()`-local variable from Day 14's test code, not accessible inside the class method. Root cause: copy-pasted the normalization idea without checking which values are actually in scope inside the method. Fixed by using `out.length` (already set earlier in the same method) instead.
+   - Attempted `abs(in - recovered)` on whole `Signal` objects, expecting it to work like element-wise numeric subtraction — `operator-` isn't defined between two `Signal` objects, and even if it were, subtracting two full signals doesn't reduce to a single number `abs()` could process. Resolved by comparing individual elements (`std::complex<double>`) via a new `get(i)` accessor, where `std::abs` on a `std::complex<double>` difference correctly returns a magnitude.
+
+4. **Hypothesis tested and corrected:**
+   - Chose the asymmetric/unitary normalization convention (`ifft()` divides by `N`, `fft()` stays raw) and validated it directly: the round-trip test (`ifft(fft(in))`) reproduced the original `+1/-1` signal within `1e-9` tolerance, confirming the choice is mathematically consistent, not just a guess.
+   - Verified ordering: the normalization loop needed to run after `fftw_execute()` completed (data not valid before that), and confirmed placement relative to `fftw_destroy_plan()` doesn't affect correctness since the plan and the data buffer are independent once execution finishes.
+
+5. **Confidence at checkpoints:** High on the `ifft()` structure itself once the `fft()` implementation was already understood (very close variants). Initially low on how to compare two `Signal` objects meaningfully — needed to be walked through why whole-object subtraction doesn't apply and how a getter resolves the access problem correctly.
+
+6. **Open questions:** none pending.
+
+7. **Connection to the project:** `fft()`/`ifft()` now form a validated, self-consistent pair — a core building block for both the modulator (symbols → `ifft()` → time-domain transmit signal) and demodulator (received signal → `fft()` → frequency-domain symbols) stages of the OFDM pipeline.
+
+8. **Source of help:** Mostly self-directed for the `ifft()` structure (close variant of `fft()`); needed guidance on the `Signal`-vs-`Signal` subtraction misconception and on choosing/justifying the normalization convention.
+
+## Additional reflection
+This was the first day requiring a fundamentally different testing technique (tolerance-based floating-point comparison) rather than exact-value assertions used throughout Days 5–13. Worth flagging as a category shift: any future numeric method involving real computation (not just data movement/bookkeeping) will likely need this same tolerance-based testing approach rather than `==`.

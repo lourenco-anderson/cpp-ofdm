@@ -18,24 +18,16 @@ class Signal {
         void print() const;
         bool is_valid() const;
         std::complex<double> get(size_t i) const; // individual element getter 
+
         Signal& operator=(const Signal &other); // copy assignment operator
         Signal(Signal&& other) noexcept; // move constructor
         Signal& operator=(Signal&& other) noexcept; // move assignment operator
+
         Signal fft() const; // perform FFT on the signal
         Signal ifft() const; // perform iFFT on the signal
         
 };
 
-class Matrix {
-    private:
-        std::complex<double> *data;
-        size_t rows;
-        size_t cols;
-    public:
-        Matrix(); // Empty constructor
-        Matrix(size_t rows, size_t cols); // constructor: allocate memory
-        ~Matrix(); // destructor: free memory
-};
 Signal::Signal(){
     this->length = 0;
     this->data = NULL;
@@ -102,7 +94,7 @@ std::complex<double> Signal::get(size_t i) const{
 }
 
 Signal& Signal::operator=(const Signal &other){
-    std::cout << "Signal assigned" <<std::endl;
+    // std::cout << "Signal assigned" <<std::endl;
     if (this != &other){
         fftw_free(this->data);
 
@@ -121,7 +113,7 @@ Signal& Signal::operator=(const Signal &other){
 }
 
 Signal::Signal(Signal&& other) noexcept {
-    std::cout << "Signal moved" <<std::endl;
+    // std::cout << "Signal moved" <<std::endl;
     this->data = other.data;
     this->length = other.length;
 
@@ -130,7 +122,7 @@ Signal::Signal(Signal&& other) noexcept {
 }
 
 Signal& Signal::operator=(Signal&& other) noexcept {
-    std::cout << "Signal copied by move" << std::endl;
+    // std::cout << "Signal copied by move" << std::endl;
     
     if (this != &other){
         fftw_free(this->data);

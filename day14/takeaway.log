@@ -1,0 +1,24 @@
+# Log — Day 14
+
+1. **Actual duration:** ~1h30m — implementing `Signal::fft()` as a class method, resolving the empty-constructor design problem, and validating against a known signal.
+
+2. **New tools/commands:** FFTW's 3-step plan workflow (`fftw_plan_dft_1d` → `fftw_execute` → `fftw_destroy_plan`) used inside a class method rather than loose code; `fftw_cleanup()` to release FFTW's internal wisdom cache; the C++ rule that private-field access is scoped to the *class*, not the *instance* (enabling one `Signal` method to read/write another `Signal` instance's private fields).
+
+3. **Bug + root cause:**
+   - First attempt tried calling `in.data()` and `out.data()` directly from `main()` — compile errors, because `data` is a private field (not a method), and it's inaccessible from outside the class regardless. Root cause: treating the class like the old C struct, where every field was freely accessible from any function. Fixed by moving all logic inside `Signal::fft()`, where private-field access between `Signal` instances is legal.
+   - Inside `fft()`, allocated `out.length` but forgot to `fftw_malloc` `out.data` before passing it to FFTW as the output buffer — would have passed a `NULL` pointer to `fftw_plan_dft_1d`. Root cause: focus on the FFTW call itself, missing that the output `Signal`'s buffer still needed the same allocation pattern used everywhere else in the class. Caught before running, by reviewing the empty constructor's guarantee (`data == NULL` by default, making the missing allocation visible as a design gap rather than a silent crash).
+
+4. **Hypothesis tested and corrected:**
+   - Verified the FFT of the `+1/-1` alternating signal against manual reasoning: this pattern equals `(-1)^n`, mathematically a pure complex exponential at the Nyquist frequency, so the DFT should produce a single impulse at bin `N/2` with magnitude `N` (not 1, confirming FFTW's non-normalizing convention from Day 12). Result matched exactly (bin 4 of 8, magnitude 8).
+   - Ran `valgrind` and saw a new category — "still reachable" bytes — not previously encountered; researched and confirmed this is FFTW's internal wisdom cache, resolved by adding `fftw_cleanup()`, not a bug in the class's own allocation logic.
+
+5. **Confidence at checkpoints:** High on FFTW mechanics (already exercised loosely in Day 12). Correctly reasoned through the design decision to return a new `Signal` (Option B) over in-place modification, tying it to `const`-correctness and RAII considerations already familiar from prior days.
+
+6. **Open questions:** none pending — normalization strategy explicitly deferred to Day 15, not left ambiguous.
+
+7. **Connection to the project:** `Signal::fft()` is the first piece of actual DSP functionality implemented as a class method, encapsulating what was previously loose test code (Day 12) into something safe to reuse — a direct building block toward the demodulator (frequency-domain analysis) in the project roadmap.
+
+8. **Source of help:** Mostly self-directed, applying patterns already established in prior days (empty constructor, `static_assert`-backed `reinterpret_cast`, `fftw_malloc`/`fftw_free` pairing); targeted clarification on `private` access rules between class instances, and on interpreting "still reachable" in valgrind output.
+
+## Additional reflection
+The empty constructor's `NULL` sentinel state turned out to be more than a design nicety — it directly enabled catching a real allocation bug (missing `fftw_malloc` for the output buffer) before it caused undefined behavior. This reinforces a theme from earlier days: consistent, predictable invalid states make bugs visible early rather than manifesting as silent corruption later.
