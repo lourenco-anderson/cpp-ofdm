@@ -1,1 +1,36 @@
 build/
+
+# Compiled object files / intermediate compiler output
+*.o
+*.obj
+*.i
+*.s
+*.out
+*.exe
+
+# Compiled binaries from early days (pre-CMake, plain gcc/g++ builds)
+day01/hello
+day01/signal_stats
+day02/matrix
+day02/pointers
+day03/malloc
+day03/struct
+day04/mySignal
+day04/signal
+day06/matrix
+day06/matrix_struct
+day06/test_matrix
+day07/matrix_struct
+day07/test_matrix
+day08/class
+day08/hello
+day09/class
+day09/hello
+day10/class
+day11/map
+day11/matrixMul
+day11/teste
+day12/fft_complex
+day12/fft_test
+day12/teste
+day13/mySignal

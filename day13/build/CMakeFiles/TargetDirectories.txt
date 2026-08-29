@@ -1,3 +1,0 @@
-/home/ndrs/projects/cpp-ofdm/day13/build/CMakeFiles/day13CXX.dir
-/home/ndrs/projects/cpp-ofdm/day13/build/CMakeFiles/edit_cache.dir
-/home/ndrs/projects/cpp-ofdm/day13/build/CMakeFiles/rebuild_cache.dir
