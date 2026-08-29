@@ -24,3 +24,31 @@ Signal qpsk_modulate (const std::vector<int>& bits){
     }
     return out;
 }
+
+Matrix ofdm_modulate(const std::vector<int>& input, size_t num_subcarriers){
+    // Assume que o tamanho do input é múltiplo de num_subcarriers
+    Matrix out;
+    size_t total_modulated_symbols = input.size() / 2;
+    if (total_modulated_symbols % num_subcarriers != 0){
+        return out;
+    }else{
+        size_t num_ofdm_symbols = total_modulated_symbols / num_subcarriers;
+        Signal modulated_signal = qpsk_modulate(input);
+        Matrix temp(num_ofdm_symbols, num_subcarriers);
+
+        for (size_t i = 0; i < num_ofdm_symbols; i++){
+            for (size_t j = 0; j < num_subcarriers; j++){
+                temp.set(i, j, modulated_signal.get(i * num_subcarriers + j));
+            }
+        }
+
+        out = Matrix(num_ofdm_symbols, num_subcarriers);
+        for (size_t i = 0; i <num_ofdm_symbols; i++){
+            Signal row = temp.get_row(i);
+            Signal ifft_row = row.ifft();
+            out.set_row(i, ifft_row);
+        }
+
+        return out;
+    }
+}

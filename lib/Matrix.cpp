@@ -131,3 +131,10 @@ Signal Matrix::get_row(size_t i) const{
     }
     return row;
 }
+
+
+void Matrix::set_row(size_t i, const Signal& row){
+    for (size_t j = 0; j < cols; j++){
+        this->data[i * cols + j] = row.get(j);
+    }
+}

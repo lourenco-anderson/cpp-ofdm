@@ -27,6 +27,7 @@ class Matrix {
         Matrix& operator=(Matrix&& other) noexcept; // move assignment operator
 
         Signal get_row(size_t i) const;
+        void set_row(size_t i, const Signal& row);
 
 };
 

@@ -64,7 +64,7 @@ Signal::Signal(size_t length, bool fill_pattern){
 }
 
 Signal::Signal(const Signal &s){
-    std::cout << "Signal copied" <<std::endl;
+    // std::cout << "Signal copied" <<std::endl;
     if (s.is_valid()){
         this->length = s.length;
         this->data = static_cast<std::complex<double>*>(fftw_malloc(sizeof(std::complex<double>) * s.length));
@@ -135,7 +135,7 @@ Signal::Signal(Signal&& other) noexcept {
 }
 
 Signal& Signal::operator=(Signal&& other) noexcept {
-    std::cout << "Signal copied by move" << std::endl;
+    // std::cout << "Signal copied by move" << std::endl;
     
     if (this != &other){
         fftw_free(this->data);

@@ -11,7 +11,7 @@
 int main() {
     static_assert(sizeof(std::complex<double>) == sizeof(fftw_complex), "Incompatible layout between std::complex and fftw_complex");   
 
-    size_t r(5), c(5);
+    /* size_t r(5), c(5);
 
     Matrix m(r, c);
     if(m.is_valid()){
@@ -52,6 +52,29 @@ int main() {
     std::vector<int> bits = {0, 0, 0, 1, 1, 0, 1, 1};
     Signal qpsk = qpsk_modulate(bits);
     qpsk.print();
-    return 0;
+    return 0; */
+    std::vector<int> bits = {0,0, 0,1, 1,0, 1,1, 0,0, 0,1, 1,0, 1,1}; // 16 bits = 8 símbolos QPSK
+    size_t num_subcarriers = 4; // 8/4 = 2 símbolos OFDM
 
+    Matrix time_domain = ofdm_modulate(bits, num_subcarriers);
+    if (!time_domain.is_valid()) {
+        std::cout << "OFDM modulation failed." << std::endl;
+        return 1;
+    }
+    time_domain.print();
+
+    Signal row0 = time_domain.get_row(0);
+    Signal sanity_check = row0.fft();
+    sanity_check.print();
+
+    Signal modulated = qpsk_modulate(bits);
+    modulated.print();
+
+    for (size_t i = 0; i < row0.size(); i++){
+        if(std::abs(sanity_check.get(i) - modulated.get(i))>1e-9){        
+            assert(std::abs(sanity_check.get(i) - modulated.get(i)) < 1e-9);
+        }
+    }
+    fftw_cleanup();
+    return 0;
 }
