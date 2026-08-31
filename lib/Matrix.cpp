@@ -138,3 +138,11 @@ void Matrix::set_row(size_t i, const Signal& row){
         this->data[i * cols + j] = row.get(j);
     }
 }
+
+size_t Matrix::size_rows() const{
+    return rows;
+}
+
+size_t Matrix::size_cols() const{
+    return cols;
+}

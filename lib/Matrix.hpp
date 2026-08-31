@@ -28,6 +28,8 @@ class Matrix {
 
         Signal get_row(size_t i) const;
         void set_row(size_t i, const Signal& row);
+        size_t size_rows() const;
+        size_t size_cols() const;
 
 };
 
