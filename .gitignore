@@ -1,5 +1,8 @@
 build/
 
+# Editor settings
+.vscode/
+
 # Compiled object files / intermediate compiler output
 *.o
 *.obj

@@ -80,6 +80,7 @@ int main() {
     Matrix time_domain1 = ofdm_modulate(original_bits, 4);
     std::vector<int> recovered_bits = ofdm_demodulate(time_domain1, 4);
     assert(original_bits == recovered_bits);
+    std::cout << "OFDM round-trip OK: " << recovered_bits.size() << "/" << original_bits.size() << " bits recovered" << std::endl;
     fftw_cleanup();
     return 0;
 }
