@@ -1,6 +1,6 @@
 # cpp-ofdm
 
-> ⚠️ **Work in progress.** Core modulation pipeline works and is validated; channel model, BER analysis and test suite are next. See [Roadmap](#roadmap).
+> ⚠️ **Work in progress.** Core modulation pipeline works and is validated; channel model, BER analysis, and test suite are next. See [Roadmap](#roadmap).
 
 An OFDM modulator/demodulator written from scratch in C++17, using FFTW for the transforms. Built as a structured learning project — the full day-by-day log is in [`journal/`](journal/).
 
@@ -36,6 +36,9 @@ OFDM round-trip OK: 16/16 bits recovered
 - [ ] Cyclic prefix
 - [ ] Multipath channel and one-tap frequency-domain equalization
 - [ ] Code cleanup (constellation energy normalization, input validation)
+
+## Development process
+This is a structured learning project. I write the code and make the design decisions; Claude (Anthropic) mentors and reviews my code, challenges my choices, explains concepts, and helps me debug. I document the reasoning, mistakes, and root causes behind each step day by day in [`journal/`](journal).
 
 ## License
 MIT — see [LICENSE](LICENSE).
